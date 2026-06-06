@@ -1,6 +1,6 @@
 # Outlook Redline Add-in — Project Plan
 
-> **Status:** Planning complete, implementation not started  
+> **Status:** Stage 0 complete — ready for Stage 1 (Office.js bootstrap)  
 > **Last updated:** 2026-06-06  
 > **Goal:** A privacy-first, sideloadable Outlook compose add-in that renders Word-style visual redlines (deletions in red strikethrough, additions in blue underline) inside email drafts using email-safe HTML — with no backend and no data leaving the client.
 
@@ -639,9 +639,18 @@ Use this during Stage 8 sign-off:
 
 > Append entries after each stage. Format: **Stage N — date — what changed — concept demonstrated**
 
-### Stage 0
+### Stage 0 — 2026-06-06
 
-*Not started.*
+**What changed:**
+- Initialized Vite + React 19 + TypeScript project with ESLint and Vitest
+- Added `@vitejs/plugin-basic-ssl` so `npm run dev` serves **https://localhost:5173**
+- Added `diff` and `@types/office-js` (used from Stage 4 / Stage 1 respectively)
+- Created `manifest.xml` (compose-only, `ReadWriteItem`, ribbon button → task pane)
+- Added `scripts/generate-icons.mjs` (dependency-free PNG generator) and `scripts/generate-certs.sh` (optional mkcert)
+- Added `README.md` with sideload steps; placeholder `src/redline/types.ts` + scaffold Vitest test
+- Verified: `npm test`, `npm run build`, `npm run lint`, HTTPS 200 on `/index.html` and icons
+
+**Concept demonstrated:** An Outlook add-in is just a **web app over HTTPS** plus an **XML manifest** that tells Outlook where to load the UI and what mailbox permissions it needs. The manifest is not the app — it is the wiring diagram. Office sideloading requires HTTPS even on localhost, which is why Vite runs with a self-signed cert in dev.
 
 ### Stage 1
 
@@ -677,13 +686,15 @@ Use this during Stage 8 sign-off:
 
 ---
 
-## Appendix A — Quick Reference Commands (planned)
+## Appendix A — Quick Reference Commands
 
 ```bash
-npm install
-npm run dev          # HTTPS Vite server for sideloading
+npm install          # also runs postinstall → generate-icons.mjs
+npm run dev          # HTTPS Vite server for sideloading (https://localhost:5173)
 npm test             # Vitest unit tests
-npm run build        # Production bundle (optional preview)
+npm run build        # Production bundle
+npm run lint         # ESLint
+npm run icons        # Regenerate manifest PNG icons
 ```
 
 ## Appendix B — Redline Style Constants (planned)

@@ -1,0 +1,52 @@
+:root {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  color: #242424;
+  background-color: #fafafa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  padding: 16px;
+  max-width: 360px;
+}
+
+.app-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  font-size: 0.875rem;
+  color: #616161;
+}
+
+.status-card {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.status-label {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: #0078d4;
+}
+
+.status-card code {
+  font-size: 0.8125rem;
+  background: #f3f3f3;
+  padding: 1px 4px;
+  border-radius: 3px;
+}

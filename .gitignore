@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local env
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Vite / TypeScript cache
+*.local
+node_modules/.tmp/
+
+# Optional local TLS certs (if using mkcert via scripts/generate-certs.sh)
+.certs/
