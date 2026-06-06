@@ -1,6 +1,6 @@
 # Outlook Redline Add-in — Project Plan
 
-> **Status:** Stage 0 complete — ready for Stage 1 (Office.js bootstrap)  
+> **Status:** Stage 3 complete — ready for Stage 4 (core redline engine)  
 > **Last updated:** 2026-06-06  
 > **Goal:** A privacy-first, sideloadable Outlook compose add-in that renders Word-style visual redlines (deletions in red strikethrough, additions in blue underline) inside email drafts using email-safe HTML — with no backend and no data leaving the client.
 
@@ -652,17 +652,38 @@ Use this during Stage 8 sign-off:
 
 **Concept demonstrated:** An Outlook add-in is just a **web app over HTTPS** plus an **XML manifest** that tells Outlook where to load the UI and what mailbox permissions it needs. The manifest is not the app — it is the wiring diagram. Office sideloading requires HTTPS even on localhost, which is why Vite runs with a self-signed cert in dev.
 
-### Stage 1
+### Stage 1 — 2026-06-06
 
-*Not started.*
+**What changed:**
+- Loaded Office.js from CDN in `index.html`
+- Added `src/outlook/officeReady.ts` — Promise wrapper around `Office.onReady()`
+- Added `src/outlook/context.ts` — sync compose vs read detection via `getComposeTypeAsync` presence
+- Gated React mount in `main.tsx` on `officeReady()` with a loading state
+- Added `StatusBanner` (host, platform, compose/read context) and `TrackingControls` (placeholder buttons, disabled outside compose)
+- Manifest ribbon button → task pane URL was already wired in Stage 0
 
-### Stage 2
+**Concept demonstrated:** The add-in UI must wait for `Office.onReady()` before calling mailbox APIs. The manifest binds the ribbon button to the task pane URL; Outlook hosts that page inside a WebView. Compose vs read is not always obvious from the manifest alone — checking for compose-only APIs (e.g. `getComposeTypeAsync`) is a practical runtime guard.
 
-*Not started.*
+### Stage 2 — 2026-06-06
 
-### Stage 3
+**What changed:**
+- Implemented `src/outlook/body.ts` — `getBodyCoerced`, `setBody`, plus `getBodyHtml` / `getBodyText` / `setBodyHtml` helpers
+- Wrapped async Office.js callbacks in Promises with clear error messages
+- Added `useOutlookBody` hook and `BodyDebugControls` with **Read Body** / **Write Test HTML** buttons
+- Write Test HTML injects `<p>Hello <b>world</b></p>` using `Office.CoercionType.Html`
 
-*Not started.*
+**Concept demonstrated:** Outlook body APIs are always async (`getAsync` / `setAsync`). HTML coercion preserves formatting in the compose editor and in sent mail — this is the write path redlines will use in Stage 5.
+
+### Stage 3 — 2026-06-06
+
+**What changed:**
+- Implemented `src/outlook/selection.ts` — `getSelectedText()` / `getSelectedHtml()` via `getSelectedDataAsync`
+- Added `useTracking` hook storing `{ baselineText, baselineHtml?, capturedAt, scope }` in React state
+- Wired **Start Tracking**: non-empty selection → `scope: 'selection'`, otherwise full body text + HTML
+- Status banner shows **Tracking N characters since …** when a baseline is active
+- Show Redline / Accept All stay disabled until a baseline exists
+
+**Concept demonstrated:** The baseline lives in add-in memory, not in Outlook metadata — editing the draft does not change the stored snapshot until the user clicks Start Tracking again. Selection API support varies by host, so empty or failed selection reads fall back to the full body.
 
 ### Stage 4
 

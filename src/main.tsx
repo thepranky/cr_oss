@@ -2,10 +2,34 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './App.css';
+import { officeReady } from './outlook/officeReady';
 
-// Stage 1 will gate rendering on Office.onReady(); for now mount immediately for local dev.
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element #root not found');
+}
+
+const root = createRoot(rootElement);
+
+root.render(
+  <main className="app app--loading">
+    <p>Loading Office.js…</p>
+  </main>,
 );
+
+officeReady()
+  .then((hostInfo) => {
+    root.render(
+      <StrictMode>
+        <App hostInfo={hostInfo} />
+      </StrictMode>,
+    );
+  })
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    root.render(
+      <StrictMode>
+        <App hostInfo={null} initError={message} />
+      </StrictMode>,
+    );
+  });

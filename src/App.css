@@ -30,22 +30,156 @@ body {
   color: #616161;
 }
 
-.status-card {
+.app--loading {
+  padding: 16px;
+  font-size: 0.875rem;
+  color: #616161;
+}
+
+.status-banner {
   padding: 12px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   background: #fff;
   font-size: 0.875rem;
+  margin-bottom: 16px;
 }
 
-.status-label {
-  margin: 0 0 8px;
+.status-banner--ok {
+  border-color: #c7e0f4;
+  background: #f3f9fd;
+}
+
+.status-banner--warn {
+  border-color: #fde7a0;
+  background: #fffbf0;
+}
+
+.status-banner--error {
+  border-color: #f1bbbc;
+  background: #fdf3f4;
+}
+
+.status-banner__title {
+  margin: 0 0 4px;
   font-weight: 600;
   color: #0078d4;
 }
 
-.status-card code {
+.status-banner--warn .status-banner__title {
+  color: #8a6914;
+}
+
+.status-banner--error .status-banner__title {
+  color: #a4262c;
+}
+
+.status-banner__detail {
+  margin: 0;
+  color: #616161;
+}
+
+.status-banner__detail + .status-banner__detail {
+  margin-top: 4px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls__hint {
+  margin: 4px 0 0;
   font-size: 0.8125rem;
+  color: #616161;
+}
+
+.controls__error {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: #a4262c;
+}
+
+.status-banner__detail--strong {
+  font-weight: 600;
+  color: #242424;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.btn:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #c8c8c8;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: #106ebe;
+  border-color: #106ebe;
+}
+
+.btn--secondary {
+  margin-top: 4px;
+}
+
+.debug-controls {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.debug-controls__label {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8a8a;
+}
+
+.debug-controls__status {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  color: #616161;
+}
+
+.debug-controls__error {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  color: #a4262c;
+}
+
+.debug-controls__preview {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  color: #616161;
+  word-break: break-word;
+}
+
+.debug-controls__preview code {
+  display: inline;
+  font-size: 0.75rem;
   background: #f3f3f3;
   padding: 1px 4px;
   border-radius: 3px;
