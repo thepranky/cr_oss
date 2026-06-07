@@ -1,6 +1,6 @@
 # Outlook Redline Add-in — Project Plan
 
-> **Status:** Stage 3 complete — ready for Stage 4 (core redline engine)  
+> **Status:** Stage 7 complete — ready for Stage 8 (hardening and README)  
 > **Last updated:** 2026-06-06  
 > **Goal:** A privacy-first, sideloadable Outlook compose add-in that renders Word-style visual redlines (deletions in red strikethrough, additions in blue underline) inside email drafts using email-safe HTML — with no backend and no data leaving the client.
 
@@ -685,21 +685,79 @@ Use this during Stage 8 sign-off:
 
 **Concept demonstrated:** The baseline lives in add-in memory, not in Outlook metadata — editing the draft does not change the stored snapshot until the user clicks Start Tracking again. Selection API support varies by host, so empty or failed selection reads fall back to the full body.
 
-### Stage 4
+### Stage 4 — 2026-06-06
 
-*Not started.*
+**What changed:**
+- Implemented `normalize.ts` — HTML → plain text with block breaks and entity decoding
+- Implemented `diff.ts` — `diffWordsWithSpace` with `diffChars` fallback for text under 40 characters
+- Implemented `render.ts` — `DiffPart[]` → email-safe HTML with inline styles and escaping
+- Implemented `acceptAll.ts` — keep inserts/equal, drop deletes; clean HTML output
+- Added `buildRedline()` orchestrator in `redline/index.ts`
+- Vitest coverage: `normalize`, `diff`, `render`, and `acceptAll` test files
 
-### Stage 5
+**Concept demonstrated:** Diff plain text, not raw HTML — tag-aware string diff is unreadable. Comparison and presentation are separate modules with zero Office.js dependency, so the engine is fully testable offline.
 
-*Not started.*
+### Stage 5 — 2026-06-06
 
-### Stage 6
+**What changed:**
+- Extended `useTracking` with **Show Redline** and **Accept All** — reads/writes compose body via `buildRedline()`
+- Show Redline: baseline vs current body text → styled HTML → `setBodyHtml`; skips rewrite when unchanged
+- Accept All: applies `cleanHtml` from last redline (or fresh diff if redline was not shown)
+- Removed Stage 2 debug controls (`BodyDebugControls`, `useOutlookBody`)
+- Polished `TrackingControls` with per-action loading labels and status/info messages
 
-*Not started.*
+**Concept demonstrated:** End-to-end compose workflow — track → edit → redline → accept. Redline HTML is what recipients see because Outlook sends HTML bodies as-is. Accept All uses the stored diff when available so strikethrough text from the redline view is not re-ingested as content.
 
-### Stage 7
+### Stage 6 — 2026-06-06
 
-*Not started.*
+**What changed:**
+- Added `EditorMode.tsx` — Original / Current textareas, local state independent of Outlook tracking
+- Added `RedlinePreview.tsx` — read-only preview of generated redline HTML
+- **Preview Redline** runs `buildRedline()` with no Outlook calls
+- **Insert into Email** calls `setBodyHtml()` with the preview (compose only)
+- App mode switch: compose controls ↔ editor mode via **Open Editor Mode** / **Back to Compose**
+
+**Concept demonstrated:** The same pure redline engine works inside the task pane without touching Outlook until insert — useful for paste/compare workflows and for testing diffs offline within the add-in.
+
+### Stage 7 — 2026-06-06
+
+**What changed:**
+- Added `sanitizeWordHtml.ts` — strips `<o:p>`, `mso-*` styles, conditional comments; whitelists `b`, `i`, `p`, `ul`, `li`
+- Added `RichTextField` contenteditable with custom paste handler using `clipboardData.getData('text/html')`
+- Editor mode fields now show pasted Word formatting (bold, lists) while redline diffs use extracted plain text
+- UI tooltip documents Word paste limitations (no OOXML Track Changes metadata)
+
+**Concept demonstrated:** v1 treats Word as an HTML clipboard source, not an OOXML revision document — visible formatting survives paste; diff still runs on normalized plain text.
+
+### Post-v1 — HTML-preserving redline (medium approach)
+
+**What changed:**
+- Added `htmlPlainMap.ts` — DOM walk builds plain text + per–text-node HTML segments (`<li>`, `<b>`, etc.)
+- Added `renderPreserving.ts` — plain-text diff unchanged; equal/insert/delete slices map back to HTML; consecutive `<li>` wrapped in `<ul>`
+- `buildRedline()` uses preserving render when both sides are HTML (`baselineIsHtml` + `currentIsHtml`)
+- Compose **Show Redline** / **Accept All** now diff via HTML maps (`baselineHtml` + `getBodyHtml()`)
+
+**Concept demonstrated:** Diff on plain text, present with HTML — unchanged runs keep formatting; changed runs get redline spans. Partial word splits inside a single formatted run fall back to plain text for that slice (simple, defensible).
+
+### Post-v1 — Block-level list preservation + clipboard OOXML
+
+**What changed (lists bug fix):**
+- Added `htmlBlocks.ts` — diff at block level (`<li>`, `<p>`); redline spans stay **inside** blocks, never wrapping `<li>`
+- Consecutive list items grouped in `<ul style="…">` for Outlook compose compatibility
+- `buildRedline()` prefers block-preserving path when both inputs are HTML
+
+**What changed (Word OOXML paste):**
+- Added `wordOoxml.ts` — reads `.docx` bytes from clipboard (`fflate` unzip → `word/document.xml`)
+- Parses `w:ins` / `w:del` into redline spans; **gracefully skips** when no docx payload or no revision markup
+- Editor paste tries OOXML first, then existing HTML/plain fallback
+
+### Formatting + diff granularity fixes
+
+**What changed:**
+- **Block pairing by index** when paragraph/list counts match — fixes whole-sentence delete+re-add on tiny edits (root cause: `diffArrays` used strict equality on block text)
+- **Styled inline diff inside blocks** — preserves `style`, `font`, bold on equal runs and localized edits
+- **Smarter `computeDiff`**: char-level for localized edits in long text; sentence-level for multi-sentence rewrites; word-level fallback
+- Partial mid-run slices reapply opening inline tags (font-size, font-family) instead of plain text
 
 ### Stage 8
 

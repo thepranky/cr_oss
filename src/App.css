@@ -18,6 +18,10 @@ body {
   max-width: 360px;
 }
 
+.app--editor {
+  max-width: 420px;
+}
+
 .app-header h1 {
   margin: 0 0 4px;
   font-size: 1.25rem;
@@ -101,6 +105,12 @@ body {
   color: #a4262c;
 }
 
+.controls__info {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: #0078d4;
+}
+
 .status-banner__detail--strong {
   font-weight: 600;
   color: #242424;
@@ -143,13 +153,103 @@ body {
   margin-top: 4px;
 }
 
-.debug-controls {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px dashed #e0e0e0;
+.btn--link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0078d4;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-.debug-controls__label {
+.btn--link:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
+
+.editor-mode__intro {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  color: #616161;
+}
+
+.editor-mode__word-tip {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  background: #f9f9f9;
+  font-size: 0.75rem;
+  color: #616161;
+  cursor: help;
+}
+
+.editor-field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.editor-field__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.editor-field__input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.editor-field__input--rich {
+  min-height: 120px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.editor-field__input--rich:empty::before {
+  content: attr(data-placeholder);
+  color: #a0a0a0;
+  pointer-events: none;
+}
+
+.editor-field__input--rich ul {
+  margin: 0.5em 0;
+  padding-left: 1.25em;
+}
+
+.editor-field__input:focus {
+  outline: 2px solid #0078d4;
+  outline-offset: 1px;
+}
+
+.redline-preview {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.redline-preview--empty {
+  color: #616161;
+  font-size: 0.8125rem;
+}
+
+.redline-preview--empty p {
+  margin: 0;
+}
+
+.redline-preview__label {
   margin: 0 0 8px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -158,29 +258,6 @@ body {
   color: #8a8a8a;
 }
 
-.debug-controls__status {
-  margin: 8px 0 0;
-  font-size: 0.8125rem;
-  color: #616161;
-}
-
-.debug-controls__error {
-  margin: 8px 0 0;
-  font-size: 0.8125rem;
-  color: #a4262c;
-}
-
-.debug-controls__preview {
-  margin: 8px 0 0;
-  font-size: 0.8125rem;
-  color: #616161;
+.redline-preview__content {
   word-break: break-word;
-}
-
-.debug-controls__preview code {
-  display: inline;
-  font-size: 0.75rem;
-  background: #f3f3f3;
-  padding: 1px 4px;
-  border-radius: 3px;
 }
