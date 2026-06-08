@@ -1,14 +1,12 @@
 # Cr_oss — Track Changes for Outlook
 
-Privacy-first Outlook compose add-in that brings Word-style track changes to email drafts. Deletions appear as red strikethrough, insertions as blue underline. No backend, no login, no analytics — everything runs locally in the task pane.
+Privacy-first Outlook compose add-in that brings Word-style track changes to email drafts. No backend, no login, no analytics — everything runs locally in the task pane.
 
 ## Features
 
 **Draft redline** — snapshot the compose body (or a selection), edit freely, then insert a formatted redline showing exactly what changed. Formatting and styling of the original email are preserved.
 
 **Live editor** — bring a selection into the built-in editor and see track changes update in real time as you type. Copy the redlined output to paste anywhere in the draft.
-
-**Word paste support** — pasting from Microsoft Word preserves existing revision markup (ins/del) from OOXML. Plain HTML and text pastes are sanitized of Word-specific noise.
 
 ## Two workflows
 
@@ -29,17 +27,17 @@ Privacy-first Outlook compose add-in that brings Word-style track changes to ema
 
 No install or dev server required — the add-in is hosted at [cr-oss-track.vercel.app](https://cr-oss-track.vercel.app).
 
-**Prerequisites:** Outlook with compose support (Outlook on the web, new Outlook, or classic desktop) and permission to sideload a custom add-in.
+**Prerequisites:** Outlook with permission to load a custom add-in.
 
 ### 1. Download the manifest
 
 Outlook needs a **local file**, not a URL. Download `manifest.xml` using either method:
 
-- **GitHub Release (easiest):** go to [Releases](https://github.com/thepranky/cr_oss/releases/latest) → download `manifest.xml` from Assets.
+- **GitHub Release (easiest):** go to [Releases](https://github.com/thepranky/cr_oss/releases/latest) → click on `manifest.xml` download from Assets.
 - **From the repo:** open [manifest.xml](https://github.com/thepranky/cr_oss/blob/master/manifest.xml) → click the **download** button (↓) on the file toolbar.
 - **Terminal:** `curl -LO https://github.com/thepranky/cr_oss/releases/latest/download/manifest.xml`
 
-### 2. Sideload the add-in
+### 2. Load the add-in on your Outlook
 
 **Outlook on the web**
 

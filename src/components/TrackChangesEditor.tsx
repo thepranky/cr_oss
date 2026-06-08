@@ -307,17 +307,16 @@ export function TrackChangesEditor({
       event.preventDefault();
       const hadBaseline = Boolean(baselineSnapshotRef.current);
 
-      void pasteContentFromClipboard(event.clipboardData).then((content) => {
-        document.execCommand('insertHTML', false, content);
-        handleEditorInput();
+      const content = pasteContentFromClipboard(event.clipboardData);
+      document.execCommand('insertHTML', false, content);
+      handleEditorInput();
 
-        if (!hadBaseline) {
-          const editorHtml = editorRef.current?.innerHTML ?? '';
-          if (extractCleanEditorHtml(editorHtml).trim()) {
-            establishBaseline(editorHtml);
-          }
+      if (!hadBaseline) {
+        const editorHtml = editorRef.current?.innerHTML ?? '';
+        if (extractCleanEditorHtml(editorHtml).trim()) {
+          establishBaseline(editorHtml);
         }
-      });
+      }
     },
     [establishBaseline, handleEditorInput],
   );

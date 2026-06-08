@@ -103,13 +103,8 @@ function pasteFromHtmlOrPlain(clipboard: DataTransfer): string {
     .join('');
 }
 
-/** Paste handler: OOXML track changes when present, otherwise sanitized HTML/plain text. */
-export async function pasteContentFromClipboard(clipboard: DataTransfer): Promise<string> {
-  const { tryPasteFromWordOoxml } = await import('./wordOoxml');
-  const ooxmlHtml = await tryPasteFromWordOoxml(clipboard);
-  if (ooxmlHtml) {
-    return ooxmlHtml;
-  }
+/** Paste handler: sanitized Word HTML when present, otherwise plain text wrapped in paragraphs. */
+export function pasteContentFromClipboard(clipboard: DataTransfer): string {
   return pasteFromHtmlOrPlain(clipboard);
 }
 

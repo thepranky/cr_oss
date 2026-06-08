@@ -46,7 +46,7 @@ describe('sanitizeWordHtml', () => {
 });
 
 describe('pasteContentFromClipboard', () => {
-  it('prefers sanitized HTML from the clipboard', async () => {
+  it('prefers sanitized HTML from the clipboard', () => {
     const clipboard = {
       items: [],
       getData: (type: string) => {
@@ -56,19 +56,17 @@ describe('pasteContentFromClipboard', () => {
       },
     } as unknown as DataTransfer;
 
-    const content = await pasteContentFromClipboard(clipboard);
+    const content = pasteContentFromClipboard(clipboard);
     expect(content).toContain('<b>world</b>');
     expect(content).not.toContain('mso-');
   });
 
-  it('falls back to plain text wrapped in paragraphs', async () => {
+  it('falls back to plain text wrapped in paragraphs', () => {
     const clipboard = {
       items: [],
       getData: (type: string) => (type === 'text/plain' ? 'Line one\nLine two' : ''),
     } as unknown as DataTransfer;
 
-    await expect(pasteContentFromClipboard(clipboard)).resolves.toBe(
-      '<p>Line one</p><p>Line two</p>',
-    );
+    expect(pasteContentFromClipboard(clipboard)).toBe('<p>Line one</p><p>Line two</p>');
   });
 });

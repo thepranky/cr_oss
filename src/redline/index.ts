@@ -152,11 +152,6 @@ export {
   type PlainTextMap,
 } from './htmlPlainMap';
 export { buildFullDraftRedline, buildRegionRedline, hasHtmlContent } from './workflow';
-export {
-  ooxmlDocumentToHtml,
-  readDocxFromClipboard,
-  tryPasteFromWordOoxml,
-} from './wordOoxml';
 export { pasteContentFromClipboard, preprocessWordHtml, sanitizeWordHtml } from './sanitizeWordHtml';
 export { stripRedlineMarkup } from './stripRedline';
 export {
