@@ -25,20 +25,54 @@ Privacy-first Outlook compose add-in that brings Word-style track changes to ema
 2. Track Changes turns on automatically. Every edit you make is shown live in redline style.
 3. Click **Copy** to copy the redlined HTML to the clipboard, then paste it wherever you want in the draft.
 
-## Prerequisites
+## Try it in Outlook
 
-- **Node.js** 20+ and npm
-- **Outlook** with compose support (Outlook on the web, new Outlook, or classic desktop)
-- Ability to sideload a custom add-in manifest
+No install or dev server required — the add-in is hosted at [cr-oss-track.vercel.app](https://cr-oss-track.vercel.app).
 
-## Quick start
+**Prerequisites:** Outlook with compose support (Outlook on the web, new Outlook, or classic desktop) and permission to sideload a custom add-in.
+
+### 1. Download the manifest
+
+Outlook needs a **local file**, not a URL. Download `manifest.xml` using either method:
+
+- **GitHub Release (easiest):** go to [Releases](https://github.com/thepranky/cr_oss/releases/latest) → download `manifest.xml` from Assets.
+- **From the repo:** open [manifest.xml](https://github.com/thepranky/cr_oss/blob/master/manifest.xml) → click the **download** button (↓) on the file toolbar.
+- **Terminal:** `curl -LO https://github.com/thepranky/cr_oss/releases/latest/download/manifest.xml`
+
+### 2. Sideload the add-in
+
+**Outlook on the web**
+
+1. Open [Outlook on the web](https://outlook.office.com) and start a **new email**.
+2. **Apps** (or **Get Add-ins**) → **My add-ins** → **Custom add-ins** → **Add from file**.
+3. Select the `manifest.xml` you downloaded.
+4. In the compose ribbon, open **Cr_oss** to launch the task pane.
+
+**New Outlook (Windows / Mac)**
+
+1. **Settings** → **Manage add-ins**.
+2. **My add-ins** → **Custom add-ins** → **Add from file** → select `manifest.xml`.
+3. Compose a new message and open **Cr_oss** from the ribbon.
+
+**Classic Outlook desktop**
+
+1. **Get Add-ins** → **My Add-ins** → **Add a custom add-in** → **Add from file**.
+2. Select `manifest.xml`.
+
+> **Tip:** If the task pane is blank, check that [cr-oss-track.vercel.app](https://cr-oss-track.vercel.app) loads in your browser. Corporate networks that block Vercel may prevent the add-in from loading.
+
+> **Note:** This is a sideloaded add-in — it installs for your account only and is not published through Microsoft AppSource. You may need to re-add it after an update if Outlook prompts you, or remove and re-sideload the manifest.
+
+## Develop locally
+
+Requires **Node.js** 20+ and npm.
 
 ```bash
 npm install
 npm run dev
 ```
 
-The dev server runs at **https://localhost:5173**.
+The dev server runs at **https://localhost:5173**. Sideload **`manifest.dev.xml`** (not `manifest.xml`) so Outlook points at localhost.
 
 ### Outlook for Mac (one-time setup)
 
@@ -53,30 +87,7 @@ npm run dev              # restart if already running
 
 Verify in Safari: open https://localhost:5173 — it should load without a certificate warning.
 
-## Sideload into Outlook
-
-### Outlook on the web
-
-1. Start the dev server (`npm run dev`).
-2. Open [Outlook on the web](https://outlook.office.com) and start a **new email**.
-3. Click **Apps** (or **Get Add-ins**) → **My add-ins** → **Custom add-ins** → **Add from file**.
-4. Select `manifest.xml` from this repo.
-5. In the compose ribbon, open the **Redline** group and click **Redline** to open the task pane.
-
-### New Outlook (Windows / Mac)
-
-1. Start the dev server.
-2. Go to **Settings** → **Manage add-ins**.
-3. **My add-ins** → **Custom add-ins** → **Add from file** → select `manifest.xml`.
-4. Compose a new message and open the add-in from the ribbon.
-
-### Classic Outlook desktop
-
-1. Start the dev server.
-2. **Get Add-ins** → **My Add-ins** → **Add a custom add-in** → **Add from file**.
-3. Select `manifest.xml`.
-
-> **Tip:** If the task pane is blank, confirm the dev server is running and that you have trusted https://localhost:5173 in your browser first.
+> **Tip:** If the task pane is blank during local dev, confirm the dev server is running and that you have trusted https://localhost:5173 in your browser first.
 
 ## Scripts
 
@@ -88,6 +99,14 @@ Verify in Safari: open https://localhost:5173 — it should load without a certi
 | `npm test` | Run Vitest unit tests |
 | `npm run lint` | ESLint |
 | `npm run certs` | Generate locally-trusted dev certs via mkcert |
+| `npm run icons` | Regenerate PNG icons in `public/assets/` |
+
+## Manifest files
+
+| File | Use |
+|------|-----|
+| `manifest.xml` | Production — points at [cr-oss-track.vercel.app](https://cr-oss-track.vercel.app). Give this to users. |
+| `manifest.dev.xml` | Local development — points at `https://localhost:5173`. Separate add-in ID so it can coexist with production. |
 
 ## HTTPS in development
 
