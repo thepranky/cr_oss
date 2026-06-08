@@ -6,18 +6,18 @@
   xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
   xsi:type="MailApp">
 
-  <Id>a1b2c3d4-e5f6-7890-abcd-ef1234567890</Id>
+  <Id>b2c3d4e5-f6a7-8901-bcde-f12345678901</Id>
   <Version>0.1.0.0</Version>
   <ProviderName>Cr_oss</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Cr_oss"/>
-  <Description DefaultValue="Track changes in Outlook."/>
-  <IconUrl DefaultValue="https://cr-oss-track.vercel.app/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://cr-oss-track.vercel.app/assets/icon-80.png"/>
+  <DisplayName DefaultValue="Cr_oss (Dev)"/>
+  <Description DefaultValue="Track changes in Outlook (local development)."/>
+  <IconUrl DefaultValue="https://localhost:5173/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:5173/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://github.com/thepranky/cr_oss"/>
 
   <AppDomains>
-    <AppDomain>https://cr-oss-track.vercel.app</AppDomain>
+    <AppDomain>https://localhost:5173</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -33,7 +33,7 @@
   <FormSettings>
     <Form xsi:type="ItemEdit">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://cr-oss-track.vercel.app/index.html"/>
+        <SourceLocation DefaultValue="https://localhost:5173/index.html"/>
       </DesktopSettings>
     </Form>
   </FormSettings>
@@ -84,19 +84,19 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon16" DefaultValue="https://cr-oss-track.vercel.app/assets/icon-16.png"/>
-        <bt:Image id="Icon32" DefaultValue="https://cr-oss-track.vercel.app/assets/icon-32.png"/>
-        <bt:Image id="Icon80" DefaultValue="https://cr-oss-track.vercel.app/assets/icon-80.png"/>
+        <bt:Image id="Icon16" DefaultValue="https://localhost:5173/assets/icon-16.png"/>
+        <bt:Image id="Icon32" DefaultValue="https://localhost:5173/assets/icon-32.png"/>
+        <bt:Image id="Icon80" DefaultValue="https://localhost:5173/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="TaskpaneUrl" DefaultValue="https://cr-oss-track.vercel.app/index.html"/>
+        <bt:Url id="TaskpaneUrl" DefaultValue="https://localhost:5173/index.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel" DefaultValue="Cr_oss"/>
-        <bt:String id="TaskpaneButtonLabel" DefaultValue="Cr_oss"/>
+        <bt:String id="GroupLabel" DefaultValue="Cr_oss (Dev)"/>
+        <bt:String id="TaskpaneButtonLabel" DefaultValue="Cr_oss (Dev)"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="TaskpaneButtonDescription" DefaultValue="Open Cr_oss to track and show draft changes."/>
+        <bt:String id="TaskpaneButtonDescription" DefaultValue="Open Cr_oss (local dev) to track and show draft changes."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
