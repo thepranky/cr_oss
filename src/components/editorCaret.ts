@@ -48,8 +48,10 @@ function isInsideRedlineDelete(node: Node, root: HTMLElement): boolean {
 function walkCleanTextNodes(
   root: HTMLElement,
   callback: (node: Text, start: number, end: number) => boolean,
-): void {
+): { lastText: Text | null; lastEnd: number } {
   let offset = 0;
+  let lastText: Text | null = null;
+  let lastEnd = 0;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       if (isInsideRedlineDelete(node, root)) {
@@ -64,12 +66,16 @@ function walkCleanTextNodes(
     const length = node.textContent?.length ?? 0;
     const start = offset;
     const end = offset + length;
+    lastText = node;
+    lastEnd = end;
     if (callback(node, start, end)) {
-      return;
+      break;
     }
     offset = end;
     node = walker.nextNode() as Text | null;
   }
+
+  return { lastText, lastEnd };
 }
 
 /** Plain-text offset in the editor, excluding visible deletions. */
@@ -119,12 +125,7 @@ export function setCaretCleanOffset(root: HTMLElement, offset: number): void {
   let targetNode: Text | null = null;
   let targetOffset = 0;
 
-  let lastNode: Text | null = null;
-  let lastEnd = 0;
-
-  walkCleanTextNodes(root, (node, start, end) => {
-    lastNode = node;
-    lastEnd = end;
+  const { lastText, lastEnd } = walkCleanTextNodes(root, (node, start, end) => {
     if (offset >= start && offset < end) {
       targetNode = node;
       targetOffset = offset - start;
@@ -133,8 +134,7 @@ export function setCaretCleanOffset(root: HTMLElement, offset: number): void {
     return false;
   });
 
-  const tail: Text | null = lastNode;
-  if (!targetNode && tail !== null && offset === lastEnd) {
+  if (!targetNode && lastText !== null && offset === lastEnd) {
     const emptyBlock = findLastEmptyBlock(root);
     if (emptyBlock) {
       const range = document.createRange();
@@ -144,8 +144,8 @@ export function setCaretCleanOffset(root: HTMLElement, offset: number): void {
       selection.addRange(range);
       return;
     }
-    targetOffset = tail.textContent?.length ?? 0;
-    targetNode = tail;
+    targetOffset = lastText.textContent?.length ?? 0;
+    targetNode = lastText;
   }
 
   if (!targetNode) {
