@@ -1,3 +1,5 @@
+import type { DominantFormatting } from './dominantStyle';
+import { wrapWithDominantInline } from './dominantStyle';
 import { REDLINE_STYLES, type DiffPart } from './types';
 
 export function escapeHtml(text: string): string {
@@ -8,15 +10,24 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export function formatTextForHtml(text: string): string {
+export function formatTextForHtml(
+  text: string,
+  dominant?: DominantFormatting | null,
+): string {
+  if (dominant?.inlineStyle) {
+    return wrapWithDominantInline(text, dominant);
+  }
   return escapeHtml(text).replace(/\n/g, '<br>');
 }
 
 /** Render diff parts as email-safe HTML with inline redline styles (plain text only). */
-export function renderRedlineHtml(parts: DiffPart[]): string {
+export function renderRedlineHtml(
+  parts: DiffPart[],
+  dominant?: DominantFormatting | null,
+): string {
   const inner = parts
     .map((part) => {
-      const formatted = formatTextForHtml(part.value);
+      const formatted = formatTextForHtml(part.value, dominant);
       switch (part.op) {
         case 'delete':
           return `<span style="${REDLINE_STYLES.delete}">${formatted}</span>`;

@@ -17,4 +17,8 @@ mkcert -key-file "$CERT_DIR/localhost-key.pem" -cert-file "$CERT_DIR/localhost.p
 
 echo ""
 echo "Certs written to $CERT_DIR"
-echo "To use them, update vite.config.ts server.https with these paths."
+echo ""
+echo "If you have not already, trust the mkcert CA (required for Outlook on Mac):"
+echo "  mkcert -install"
+echo ""
+echo "Then restart the dev server: npm run dev"

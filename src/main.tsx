@@ -13,15 +13,18 @@ const root = createRoot(rootElement);
 
 root.render(
   <main className="app app--loading">
+    <header className="app-header">
+      <h1 className="app-header__title">Cr_oss</h1>
+    </header>
     <p>Loading Office.js…</p>
   </main>,
 );
 
 officeReady()
-  .then((hostInfo) => {
+  .then(() => {
     root.render(
       <StrictMode>
-        <App hostInfo={hostInfo} />
+        <App />
       </StrictMode>,
     );
   })
@@ -29,7 +32,7 @@ officeReady()
     const message = error instanceof Error ? error.message : String(error);
     root.render(
       <StrictMode>
-        <App hostInfo={null} initError={message} />
+        <App initError={message} />
       </StrictMode>,
     );
   });

@@ -8,10 +8,10 @@
 
   <Id>a1b2c3d4-e5f6-7890-abcd-ef1234567890</Id>
   <Version>0.1.0.0</Version>
-  <ProviderName>Outlook Redline (OSS)</ProviderName>
+  <ProviderName>Cr_oss</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Outlook Redline"/>
-  <Description DefaultValue="Create Word-style visual redlines in Outlook email drafts. Privacy-first — no backend, no data leaves your machine."/>
+  <DisplayName DefaultValue="Cr_oss"/>
+  <Description DefaultValue="Track and show redlines in Outlook email drafts."/>
   <IconUrl DefaultValue="https://localhost:5173/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:5173/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://github.com/"/>
@@ -92,11 +92,11 @@
         <bt:Url id="TaskpaneUrl" DefaultValue="https://localhost:5173/index.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GroupLabel" DefaultValue="Redline"/>
-        <bt:String id="TaskpaneButtonLabel" DefaultValue="Redline"/>
+        <bt:String id="GroupLabel" DefaultValue="Cr_oss"/>
+        <bt:String id="TaskpaneButtonLabel" DefaultValue="Cr_oss"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="TaskpaneButtonDescription" DefaultValue="Open the Redline task pane to track and show draft changes."/>
+        <bt:String id="TaskpaneButtonDescription" DefaultValue="Open Cr_oss to track and show draft changes."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

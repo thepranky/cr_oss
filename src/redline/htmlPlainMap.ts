@@ -1,3 +1,5 @@
+import type { FormattingContext } from './dominantStyle';
+import { wrapWithDominantInline } from './dominantStyle';
 import { decodeHtmlEntities } from './normalize';
 import { escapeHtml, formatTextForHtml } from './render';
 
@@ -61,9 +63,14 @@ function serializeTextNode(textNode: Text, body: HTMLElement): string {
   const chain: Element[] = [];
   let el: Element | null = textNode.parentElement;
   while (el && el !== body) {
-    if (!isRedlineInlineWrapper(el)) {
-      chain.unshift(el);
+    if (isRedlineInlineWrapper(el)) {
+      el = el.parentElement;
+      continue;
     }
+    if (BLOCK_TAGS.has(el.tagName)) {
+      break;
+    }
+    chain.unshift(el);
     el = el.parentElement;
   }
 
@@ -139,7 +146,7 @@ export function buildPlainTextMap(html: string, options?: { inlineOnly?: boolean
     text = walkNode(child, doc.body, text, segments);
   }
 
-  return { text: collapseNewlines(text), segments };
+  return { text, segments };
 }
 
 /** Map inline HTML within a single block (no outer p/li wrapper in segments). */
@@ -197,8 +204,23 @@ function wrapPartialWithSegmentHtml(segmentHtml: string, plain: string): string 
   return `${openTags.join('')}${formatted}${closeTags.map((tag) => `</${tag}>`).join('')}`;
 }
 
+function formatPlainFallback(
+  plain: string,
+  formatting?: FormattingContext,
+): string {
+  if (formatting?.dominant?.inlineStyle) {
+    return wrapWithDominantInline(plain, formatting.dominant);
+  }
+  return escapeHtml(plain).replace(/\n/g, '<br>');
+}
+
 /** Extract HTML for a plain-text character range; partial overlaps fall back to escaped text. */
-export function sliceMapRange(map: PlainTextMap, start: number, end: number): string {
+export function sliceMapRange(
+  map: PlainTextMap,
+  start: number,
+  end: number,
+  formatting?: FormattingContext,
+): string {
   if (start >= end) {
     return '';
   }
@@ -227,7 +249,7 @@ export function sliceMapRange(map: PlainTextMap, start: number, end: number): st
   }
 
   if (parts.length === 0) {
-    return escapeHtml(map.text.slice(start, end)).replace(/\n/g, '<br>');
+    return formatPlainFallback(map.text.slice(start, end), formatting);
   }
 
   parts.sort((a, b) => a.start - b.start);
@@ -237,14 +259,14 @@ export function sliceMapRange(map: PlainTextMap, start: number, end: number): st
 
   for (const part of parts) {
     if (part.start > cursor) {
-      result += escapeHtml(map.text.slice(cursor, part.start)).replace(/\n/g, '<br>');
+      result += formatPlainFallback(map.text.slice(cursor, part.start), formatting);
     }
     result += part.html;
     cursor = part.end;
   }
 
   if (cursor < end) {
-    result += escapeHtml(map.text.slice(cursor, end)).replace(/\n/g, '<br>');
+    result += formatPlainFallback(map.text.slice(cursor, end), formatting);
   }
 
   return result;
@@ -255,13 +277,14 @@ export function stylePlainFromBaselineAt(
   map: PlainTextMap,
   position: number,
   plain: string,
+  formatting?: FormattingContext,
 ): string {
   for (const segment of map.segments) {
     if (position >= segment.start && position <= segment.end) {
       return wrapPartialWithSegmentHtml(segment.html, plain);
     }
   }
-  return formatTextForHtml(plain);
+  return formatTextForHtml(plain, formatting?.dominant);
 }
 
 /**
@@ -275,18 +298,23 @@ export function sliceWithFormattingPreference(
   oldEnd: number,
   newStart: number,
   newEnd: number,
+  formatting?: FormattingContext,
 ): string {
-  const fromCurrent = sliceMapRange(currentMap, newStart, newEnd);
+  const fromCurrent = sliceMapRange(currentMap, newStart, newEnd, formatting);
   if (hasInlineFormatting(fromCurrent)) {
     return fromCurrent;
   }
 
-  const fromBaseline = sliceMapRange(baselineMap, oldStart, oldEnd);
+  const fromBaseline = sliceMapRange(baselineMap, oldStart, oldEnd, formatting);
   if (hasInlineFormatting(fromBaseline)) {
     return fromBaseline;
   }
 
-  return fromCurrent || fromBaseline || formatTextForHtml(currentMap.text.slice(newStart, newEnd));
+  return (
+    fromCurrent ||
+    fromBaseline ||
+    formatTextForHtml(currentMap.text.slice(newStart, newEnd), formatting?.dominant)
+  );
 }
 
 /** HTML for an inserted run, inheriting baseline styling at the insertion point when needed. */
@@ -297,18 +325,19 @@ export function resolveInsertHtml(
   newStart: number,
   newEnd: number,
   plain: string,
+  formatting?: FormattingContext,
 ): string {
-  const fromCurrent = sliceMapRange(currentMap, newStart, newEnd);
+  const fromCurrent = sliceMapRange(currentMap, newStart, newEnd, formatting);
   if (hasInlineFormatting(fromCurrent)) {
     return fromCurrent;
   }
 
-  const inherited = stylePlainFromBaselineAt(baselineMap, oldCursor, plain);
+  const inherited = stylePlainFromBaselineAt(baselineMap, oldCursor, plain, formatting);
   if (hasInlineFormatting(inherited)) {
     return inherited;
   }
 
-  return fromCurrent || inherited || formatTextForHtml(plain);
+  return fromCurrent || inherited || formatTextForHtml(plain, formatting?.dominant);
 }
 
 /** Wrap consecutive list items in a single ul for email-safe list output. */

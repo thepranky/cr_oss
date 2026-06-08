@@ -1,3 +1,4 @@
+import type { FormattingContext } from './dominantStyle';
 import {
   resolveInsertHtml,
   sliceMapRange,
@@ -11,6 +12,7 @@ import { REDLINE_STYLES, type DiffPart } from './types';
 interface RenderFromMapsOptions {
   /** When false, emit clean revised HTML (Accept All) without redline styling. */
   markChanges?: boolean;
+  formatting?: FormattingContext;
 }
 
 function renderPartsFromMaps(
@@ -20,6 +22,7 @@ function renderPartsFromMaps(
   options: RenderFromMapsOptions = {},
 ): string {
   const markChanges = options.markChanges ?? true;
+  const formatting = options.formatting;
   let oldCursor = 0;
   let newCursor = 0;
   let output = '';
@@ -36,6 +39,7 @@ function renderPartsFromMaps(
           oldCursor + length,
           newCursor,
           newCursor + length,
+          formatting,
         );
         oldCursor += length;
         newCursor += length;
@@ -44,8 +48,8 @@ function renderPartsFromMaps(
       case 'delete': {
         if (markChanges) {
           const deleted =
-            sliceMapRange(baselineMap, oldCursor, oldCursor + length) ||
-            formatTextForHtml(part.value);
+            sliceMapRange(baselineMap, oldCursor, oldCursor + length, formatting) ||
+            formatTextForHtml(part.value, formatting?.dominant);
           output += `<span style="${REDLINE_STYLES.delete}">${deleted}</span>`;
         }
         oldCursor += length;
@@ -60,6 +64,7 @@ function renderPartsFromMaps(
             newCursor,
             newCursor + length,
             part.value,
+            formatting,
           );
           output += `<span style="${REDLINE_STYLES.insert}">${inserted}</span>`;
         } else {
@@ -70,6 +75,7 @@ function renderPartsFromMaps(
             oldCursor,
             newCursor,
             newCursor + length,
+            formatting,
           );
         }
         newCursor += length;
@@ -86,18 +92,26 @@ export function renderPreservingHtml(
   parts: DiffPart[],
   baselineMap: PlainTextMap,
   currentMap: PlainTextMap,
+  formatting?: FormattingContext,
 ): string {
-  const inner = renderPartsFromMaps(parts, baselineMap, currentMap, { markChanges: true });
+  const inner = renderPartsFromMaps(parts, baselineMap, currentMap, {
+    markChanges: true,
+    formatting,
+  });
   return `<div>${inner}</div>`;
 }
 
 /** Clean revised HTML without redline markup, preserving formatting where possible. */
-export function renderPreservingCleanHtml(parts: DiffPart[], currentMap: PlainTextMap): string {
+export function renderPreservingCleanHtml(
+  parts: DiffPart[],
+  currentMap: PlainTextMap,
+  formatting?: FormattingContext,
+): string {
   const inner = renderPartsFromMaps(
     parts,
     { text: '', segments: [] },
     currentMap,
-    { markChanges: false },
+    { markChanges: false, formatting },
   );
   return `<div>${inner}</div>`;
 }

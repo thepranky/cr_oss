@@ -1,25 +1,32 @@
 import { useCallback, useState } from 'react';
 import { getBodyHtml, getBodyText, setBodyHtml } from '../outlook/body';
+import {
+  extractRegionHtml,
+  replaceRegionInHtml,
+  captureComposeSelectionAnchors,
+} from '../outlook/bodyRegion';
+import { resolveSelectionHtml } from '../outlook/selectionHtml';
 import { getSelectedHtml, getSelectedText } from '../outlook/selection';
-import { buildRedline, type RedlineResult } from '../redline';
+import {
+  buildFullDraftRedline,
+  buildRegionRedline,
+  hasHtmlContent,
+} from '../redline/workflow';
+import { buildPlainTextMap } from '../redline/htmlPlainMap';
 import type { TrackingSnapshot } from '../redline/types';
 
-type TrackingAction = 'start' | 'show' | 'accept';
+type TrackingAction = 'start' | 'show';
 
 export function useTracking() {
   const [snapshot, setSnapshot] = useState<TrackingSnapshot | null>(null);
-  const [lastRedline, setLastRedline] = useState<RedlineResult | null>(null);
+  const [redlineInserted, setRedlineInserted] = useState(false);
   const [loadingAction, setLoadingAction] = useState<TrackingAction | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  const loading = loadingAction !== null;
 
   const startTracking = useCallback(async () => {
     setLoadingAction('start');
     setError(null);
-    setStatusMessage(null);
-    setLastRedline(null);
+    setRedlineInserted(false);
 
     try {
       let selectedText = '';
@@ -30,34 +37,52 @@ export function useTracking() {
       }
 
       if (selectedText.trim()) {
-        let baselineHtml: string | undefined;
+        const bodyHtml = await getBodyHtml();
+        const bodyText = buildPlainTextMap(bodyHtml).text;
+        let selectedHtmlForMatch = '';
         try {
-          const html = await getSelectedHtml();
-          if (html.trim()) {
-            baselineHtml = html;
-          }
+          selectedHtmlForMatch = (await getSelectedHtml()).trim();
         } catch {
-          // HTML selection is optional for the baseline snapshot.
+          selectedHtmlForMatch = '';
         }
 
+        const anchors =
+          captureComposeSelectionAnchors(bodyText, selectedText, {
+            bodyHtml,
+            selectionHtml: selectedHtmlForMatch || undefined,
+          }) ?? undefined;
+
+        let baselineHtml: string | undefined;
+        if (anchors) {
+          baselineHtml = await resolveSelectionHtml(bodyHtml, anchors, {
+            selectedText,
+            selectedHtml: selectedHtmlForMatch || undefined,
+          });
+        }
+
+        const baselineText = hasHtmlContent(baselineHtml)
+          ? buildPlainTextMap(baselineHtml!).text
+          : selectedText;
+
         setSnapshot({
-          baselineText: selectedText,
+          baselineText,
           baselineHtml,
           capturedAt: new Date().toISOString(),
           scope: 'selection',
+          anchors,
+          captureBodyPlain: bodyText,
         });
-        setStatusMessage('Baseline captured from selection.');
         return;
       }
 
-      const [baselineText, baselineHtml] = await Promise.all([getBodyText(), getBodyHtml()]);
+      const baselineHtml = await getBodyHtml();
+      const baselineText = buildPlainTextMap(baselineHtml).text || (await getBodyText());
       setSnapshot({
         baselineText,
         baselineHtml,
         capturedAt: new Date().toISOString(),
         scope: 'full',
       });
-      setStatusMessage('Baseline captured from full draft body.');
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -68,29 +93,41 @@ export function useTracking() {
 
   const showRedline = useCallback(async () => {
     if (!snapshot) {
-      setError('Start Tracking before showing a redline.');
+      setError('Start tracking changes before inserting a redline.');
       return;
     }
 
     setLoadingAction('show');
     setError(null);
-    setStatusMessage(null);
 
     try {
-      const currentHtml = await getBodyHtml();
-      const result = buildRedline(snapshot.baselineHtml ?? snapshot.baselineText, currentHtml, {
-        baselineIsHtml: snapshot.baselineHtml !== undefined || snapshot.scope === 'full',
-        currentIsHtml: true,
-      });
+      const bodyHtml = await getBodyHtml();
 
-      if (!result.changed) {
-        setStatusMessage('No changes detected since the baseline.');
-        return;
+      if (snapshot.scope === 'selection' && snapshot.anchors) {
+        const currentRegionHtml = extractRegionHtml(bodyHtml, snapshot.anchors);
+        const baseline = snapshot.baselineHtml ?? snapshot.baselineText;
+        const result = buildRegionRedline(baseline, currentRegionHtml);
+
+        if (!result.changed) {
+          return;
+        }
+
+        const updatedBody = replaceRegionInHtml(bodyHtml, snapshot.anchors, result.html, {
+          captureBodyPlain: snapshot.captureBodyPlain,
+        });
+        await setBodyHtml(updatedBody);
+      } else {
+        const baseline = snapshot.baselineHtml ?? snapshot.baselineText;
+        const result = buildFullDraftRedline(baseline, bodyHtml);
+
+        if (!result.changed) {
+          return;
+        }
+
+        await setBodyHtml(result.html);
       }
 
-      await setBodyHtml(result.html);
-      setLastRedline(result);
-      setStatusMessage('Redline applied to the draft.');
+      setRedlineInserted(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -99,59 +136,19 @@ export function useTracking() {
     }
   }, [snapshot]);
 
-  const acceptAll = useCallback(async () => {
-    if (!snapshot) {
-      setError('Start Tracking before accepting changes.');
-      return;
-    }
-
-    setLoadingAction('accept');
-    setError(null);
-    setStatusMessage(null);
-
-    try {
-      let cleanHtml: string;
-
-      if (lastRedline) {
-        cleanHtml = lastRedline.cleanHtml;
-      } else {
-        const currentHtml = await getBodyHtml();
-        const result = buildRedline(snapshot.baselineHtml ?? snapshot.baselineText, currentHtml, {
-          baselineIsHtml: snapshot.baselineHtml !== undefined || snapshot.scope === 'full',
-          currentIsHtml: true,
-        });
-
-        if (!result.changed) {
-          setStatusMessage('No changes to accept.');
-          return;
-        }
-        cleanHtml = result.cleanHtml;
-      }
-
-      await setBodyHtml(cleanHtml);
-      setLastRedline(null);
-      setStatusMessage('Accepted all changes — draft updated with clean revised text.');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-    } finally {
-      setLoadingAction(null);
-    }
-  }, [snapshot, lastRedline]);
-
-  const clearError = useCallback(() => {
+  const stopTracking = useCallback(() => {
+    setSnapshot(null);
+    setRedlineInserted(false);
     setError(null);
   }, []);
 
   return {
     snapshot,
-    loading,
+    redlineInserted,
     loadingAction,
     error,
-    statusMessage,
     startTracking,
+    stopTracking,
     showRedline,
-    acceptAll,
-    clearError,
   };
 }

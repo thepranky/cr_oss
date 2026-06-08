@@ -4,6 +4,7 @@ import { buildRedline } from '../redline';
 import { computeDiff } from '../redline/diff';
 import {
   buildInlinePlainTextMap,
+  buildPlainTextMap,
   sliceMapRange,
   wrapConsecutiveListItems,
 } from '../redline/htmlPlainMap';
@@ -27,6 +28,24 @@ describe('htmlPlainMap', () => {
     const map = buildInlinePlainTextMap('<b>The parties agree</b> to the terms.');
     expect(map.segments[0]?.html).toBe('<b>The parties agree</b>');
     expect(map.segments[0]?.html).not.toContain('<div>');
+  });
+
+  it('keeps segment offsets aligned with map.text after multi-newline HTML', () => {
+    const html =
+      '<p style="margin-bottom:12pt;"><span style="font-family:Calibri;">Hello</span></p>' +
+      '<p><br></p><p><br></p>' +
+      '<p style="margin-bottom:12pt;"><span style="font-family:Calibri;">World</span></p>';
+    const map = buildPlainTextMap(html);
+
+    for (const segment of map.segments) {
+      expect(segment.end).toBeLessThanOrEqual(map.text.length);
+      expect(segment.start).toBeGreaterThanOrEqual(0);
+      expect(map.text.slice(segment.start, segment.end).length).toBeGreaterThan(0);
+    }
+
+    const helloSlice = sliceMapRange(map, 0, map.text.indexOf('World'));
+    expect(helloSlice).toContain('font-family:Calibri');
+    expect(helloSlice).not.toBe('Hello');
   });
 
   it('preserves inline tags for partial overlap slices', () => {

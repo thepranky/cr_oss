@@ -1,74 +1,80 @@
-type LoadingAction = 'start' | 'show' | 'accept' | null;
+type LoadingAction = 'start' | 'show' | null;
 
 interface TrackingControlsProps {
   disabled?: boolean;
   loadingAction?: LoadingAction;
-  hasBaseline?: boolean;
+  isTracking?: boolean;
+  canInsertRedline?: boolean;
   onStartTracking?: () => void;
+  onStopTracking?: () => void;
   onShowRedline?: () => void;
-  onAcceptAll?: () => void;
-  onOpenEditorMode?: () => void;
   trackingError?: string | null;
-  statusMessage?: string | null;
+  initError?: string;
 }
 
 export function TrackingControls({
   disabled = false,
   loadingAction = null,
-  hasBaseline = false,
+  isTracking = false,
+  canInsertRedline = false,
   onStartTracking,
+  onStopTracking,
   onShowRedline,
-  onAcceptAll,
-  onOpenEditorMode,
   trackingError,
-  statusMessage,
+  initError,
 }: TrackingControlsProps) {
   const trackingBusy = disabled || loadingAction !== null;
+  const starting = loadingAction === 'start';
 
   return (
-    <section className="controls" aria-label="Redline tracking controls">
+    <div className="controls" aria-label="Draft redline controls">
+      {initError && <p className="controls__error">{initError}</p>}
+
+      {isTracking || starting ? (
+        <div className="controls__tracking-row">
+          <div
+            className={`status-pill controls__tracking-status ${starting ? 'status-pill--loading' : 'status-pill--tracking'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {!starting && <span className="status-pill__dot" aria-hidden="true" />}
+            {starting ? 'Capturing baseline…' : 'Tracking changes'}
+          </div>
+          <button
+            type="button"
+            className="btn btn--danger controls__stop-tracking"
+            disabled={trackingBusy || Boolean(initError)}
+            onClick={onStopTracking}
+          >
+            Stop
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--primary btn--block"
+          disabled={trackingBusy || Boolean(initError)}
+          onClick={onStartTracking}
+          aria-pressed={false}
+        >
+          Start tracking
+        </button>
+      )}
+
       <button
         type="button"
-        className="btn btn--primary"
-        disabled={trackingBusy}
-        onClick={onStartTracking}
-      >
-        {loadingAction === 'start' ? 'Capturing baseline…' : 'Start Tracking'}
-      </button>
-      <button
-        type="button"
-        className="btn"
-        disabled={trackingBusy || !hasBaseline}
+        className="btn btn--block"
+        disabled={trackingBusy || !canInsertRedline}
         onClick={onShowRedline}
       >
-        {loadingAction === 'show' ? 'Building redline…' : 'Show Redline'}
+        {loadingAction === 'show' ? 'Inserting…' : 'Insert Redline'}
       </button>
-      <button
-        type="button"
-        className="btn"
-        disabled={trackingBusy || !hasBaseline}
-        onClick={onAcceptAll}
-      >
-        {loadingAction === 'accept' ? 'Applying changes…' : 'Accept All'}
-      </button>
-      <button
-        type="button"
-        className="btn btn--secondary"
-        disabled={loadingAction !== null}
-        onClick={onOpenEditorMode}
-      >
-        Open Editor Mode
-      </button>
-      {disabled && (
-        <p className="controls__hint">Open a compose draft to use redline controls.</p>
+
+      {disabled && !initError && (
+        <p className="controls__hint">Open a compose draft to use these controls.</p>
       )}
-      {!disabled && !hasBaseline && (
-        <p className="controls__hint">
-          Click Start Tracking to snapshot the draft (or selection) as your baseline.
-        </p>
-      )}
-      {statusMessage && <p className="controls__info">{statusMessage}</p>}
+
       {trackingError && <p className="controls__error">{trackingError}</p>}
-    </section>
+    </div>
   );
 }

@@ -1,67 +1,80 @@
-import { useState } from 'react';
-import { EditorMode } from './components/EditorMode';
-import { StatusBanner } from './components/StatusBanner';
+import { useCallback, useState } from 'react';
 import { TrackingControls } from './components/TrackingControls';
+import { TrackChangesEditor } from './components/TrackChangesEditor';
+import { useEditorRegion } from './hooks/useEditorRegion';
 import { useTracking } from './hooks/useTracking';
-import { getMailContext, type HostInfo } from './outlook';
+import { getMailContext } from './outlook';
 import './App.css';
 
-type AppMode = 'compose' | 'editor';
-
 interface AppProps {
-  hostInfo: HostInfo | null;
   initError?: string;
 }
 
-function App({ hostInfo, initError }: AppProps) {
-  const [mode, setMode] = useState<AppMode>('compose');
+function App({ initError }: AppProps) {
   const mailContext = initError ? 'unavailable' : getMailContext();
   const controlsEnabled = mailContext === 'compose';
+  const { bringSelectionToEditor } = useEditorRegion();
   const {
     snapshot,
+    redlineInserted,
     loadingAction,
     error,
-    statusMessage,
     startTracking,
+    stopTracking,
     showRedline,
-    acceptAll,
   } = useTracking();
 
+  const [editorLoad, setEditorLoad] = useState({ id: 0, html: '' });
+  const [bringing, setBringing] = useState(false);
+
+  const handleBringToEditor = useCallback(async () => {
+    setBringing(true);
+
+    try {
+      const payload = await bringSelectionToEditor();
+      setEditorLoad((prev) => ({ id: prev.id + 1, html: payload.html }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(message);
+    } finally {
+      setBringing(false);
+    }
+  }, [bringSelectionToEditor]);
+
+  const handleEditorClearRegion = useCallback(() => {
+    setEditorLoad({ id: 0, html: '' });
+  }, []);
+
   return (
-    <main className={`app ${mode === 'editor' ? 'app--editor' : ''}`}>
+    <main className="app">
       <header className="app-header">
-        <h1>Outlook Redline</h1>
-        <p className="subtitle">
-          {mode === 'editor'
-            ? 'Editor mode — compare two versions locally'
-            : 'Privacy-first draft redlines for Outlook compose'}
-        </p>
+        <h1 className="app-header__title">Cr_oss</h1>
+        <p className="app-header__subtitle">Track changes in email drafts</p>
       </header>
 
-      {mode === 'compose' ? (
-        <>
-          <StatusBanner
-            hostInfo={hostInfo}
-            mailContext={mailContext}
-            initError={initError}
-            tracking={snapshot}
-          />
+      <section className="panel">
+        <h2 className="panel__heading">Draft</h2>
+        <TrackingControls
+          disabled={!controlsEnabled}
+          initError={initError}
+          loadingAction={loadingAction}
+          isTracking={snapshot !== null && !redlineInserted}
+          canInsertRedline={snapshot !== null && !redlineInserted}
+          onStartTracking={() => void startTracking()}
+          onStopTracking={stopTracking}
+          onShowRedline={() => void showRedline()}
+          trackingError={error}
+        />
+      </section>
 
-          <TrackingControls
-            disabled={!controlsEnabled}
-            loadingAction={loadingAction}
-            hasBaseline={snapshot !== null}
-            onStartTracking={() => void startTracking()}
-            onShowRedline={() => void showRedline()}
-            onAcceptAll={() => void acceptAll()}
-            onOpenEditorMode={() => setMode('editor')}
-            trackingError={error}
-            statusMessage={statusMessage}
-          />
-        </>
-      ) : (
-        <EditorMode composeEnabled={controlsEnabled} onBack={() => setMode('compose')} />
-      )}
+      <TrackChangesEditor
+        key={`editor-${editorLoad.id}`}
+        composeEnabled={controlsEnabled}
+        bringingToEditor={bringing}
+        onBringToEditor={handleBringToEditor}
+        onClearRegion={handleEditorClearRegion}
+        initialHtml={editorLoad.html}
+      />
     </main>
   );
 }

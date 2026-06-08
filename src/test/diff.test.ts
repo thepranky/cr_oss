@@ -57,4 +57,54 @@ describe('diff', () => {
     expect(inserted).toBeLessThan(newSentence.length);
     expect(parts.some((part) => part.op === 'equal' && part.value.length > 20)).toBe(true);
   });
+
+  it('marks only appended words when text grows at the end', () => {
+    const parts = computeDiff(
+      'Trying to editor panel now',
+      'Trying to editor panel now, good changes mate',
+    );
+
+    expect(parts).toEqual([
+      { op: 'equal', value: 'Trying to editor panel now' },
+      { op: 'insert', value: ', good changes mate' },
+    ]);
+  });
+
+  it('replaces a whole word instead of matching shared letters (Stuart→James)', () => {
+    const oldText =
+      'Further to our call earlier today, Dear Stuart, we suggest proceeding on the following bases:';
+    const newText = oldText.replace('Stuart', 'James');
+
+    const parts = computeDiff(oldText, newText);
+    expect(parts).toEqual([
+      { op: 'equal', value: 'Further to our call earlier today, Dear ' },
+      { op: 'delete', value: 'Stuart' },
+      { op: 'insert', value: 'James' },
+      { op: 'equal', value: ', we suggest proceeding on the following bases:' },
+    ]);
+  });
+
+  it('still char-differs inside similar words (Arcadian→Arcadia)', () => {
+    const parts = computeDiff('Dear Arcadian,', 'Dear Arcadia,');
+    expect(parts.some((part) => part.op === 'delete' && part.value === 'n')).toBe(true);
+    expect(parts.some((part) => part.op === 'delete' && part.value === 'Arcadian')).toBe(false);
+  });
+
+  it('still char-differs short numeric tokens (31→32)', () => {
+    const oldSentence =
+      'The parties agree that the consultant shall deliver the final report no later than March 31.';
+    const newSentence = oldSentence.replace('31', '32');
+
+    const parts = computeDiff(oldSentence, newSentence);
+    expect(parts).toEqual([
+      {
+        op: 'equal',
+        value: 'The parties agree that the consultant shall deliver the final report no later than March ',
+      },
+      { op: 'equal', value: '3' },
+      { op: 'delete', value: '1' },
+      { op: 'insert', value: '2' },
+      { op: 'equal', value: '.' },
+    ]);
+  });
 });

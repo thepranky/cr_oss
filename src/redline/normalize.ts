@@ -34,9 +34,14 @@ export function htmlToPlainText(html: string): string {
   return text.replace(/\n{3,}/g, '\n\n');
 }
 
+/** Unify Windows and legacy Mac line endings to `\n`. */
+export function normalizePlainTextLineEndings(text: string): string {
+  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
 /** Normalize plain text: unify line endings and decode any stray entities. */
 export function normalizePlainText(text: string): string {
-  return decodeHtmlEntities(text.replace(/\r\n/g, '\n'));
+  return decodeHtmlEntities(normalizePlainTextLineEndings(text));
 }
 
 /** Normalize HTML or plain text input to a comparable plain-text string. */
