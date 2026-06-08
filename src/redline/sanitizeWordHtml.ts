@@ -58,7 +58,6 @@ function sanitizeWithRegex(html: string): string {
     if (!tag) return '';
     if (tag === 'br') return '<br>';
     if (match.endsWith('/>')) return `<${tag}></${tag}>`;
-    if (match.startsWith('</')) return `</${tag}>`;
     return `<${tag}>`;
   });
 

@@ -46,7 +46,7 @@ export function TrackingControls({
             disabled={trackingBusy || Boolean(initError)}
             onClick={onStopTracking}
           >
-            Stop
+            Stop Tracking
           </button>
         </div>
       ) : (
@@ -63,7 +63,7 @@ export function TrackingControls({
 
       <button
         type="button"
-        className="btn btn--block"
+        className={`btn btn--block ${canInsertRedline ? 'btn--primary' : ''}`}
         disabled={trackingBusy || !canInsertRedline}
         onClick={onShowRedline}
       >

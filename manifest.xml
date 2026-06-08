@@ -11,7 +11,7 @@
   <ProviderName>Cr_oss</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Cr_oss"/>
-  <Description DefaultValue="Track and show redlines in Outlook email drafts."/>
+  <Description DefaultValue="Track changes in Outlook."/>
   <IconUrl DefaultValue="https://localhost:5173/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:5173/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://github.com/"/>

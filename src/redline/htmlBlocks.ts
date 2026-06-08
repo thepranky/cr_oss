@@ -755,16 +755,31 @@ function appendBlockOpHtml(
     }
     case 'insert': {
       const block = op.newBlock;
-      redlineBlocks.push(toGroupedBlock({
-        ...block,
-        html: wrapBlock(
-          block.tag,
-          `<span style="${REDLINE_STYLES.insert}">${block.innerHtml}</span>`,
-          block.blockStyle,
-          block.blockClass,
-        ),
-      }));
-      cleanBlocks.push(toGroupedBlock(block));
+      if (isIgnorableBlock(block)) {
+        // Empty/structural block (e.g. paragraph created by Enter) — include as-is
+        // without redline decoration so caret restoration works and no blue &nbsp; appears.
+        const emptyHtml = wrapBlock(block.tag, '', block.blockStyle, block.blockClass);
+        const grouped: GroupedBlockHtml = {
+          html: emptyHtml,
+          listType: block.listType,
+          listWrapperStyle: block.listWrapperStyle,
+          listWrapperClass: block.listWrapperClass,
+          listStart: block.listStart,
+        };
+        redlineBlocks.push(grouped);
+        cleanBlocks.push(grouped);
+      } else {
+        redlineBlocks.push(toGroupedBlock({
+          ...block,
+          html: wrapBlock(
+            block.tag,
+            `<span style="${REDLINE_STYLES.insert}">${block.innerHtml}</span>`,
+            block.blockStyle,
+            block.blockClass,
+          ),
+        }));
+        cleanBlocks.push(toGroupedBlock(block));
+      }
       break;
     }
   }

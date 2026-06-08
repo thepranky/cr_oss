@@ -51,6 +51,31 @@ function CopyIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      className="track-editor__copy-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 8.5L6.5 11.5L12.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const COPY_SUCCESS_MS = 2000;
+
+const TRACK_RENDER_MIN_MS = 32;
+
 function createEditorState(initialHtml: string) {
   const snapshot = initialHtml.trim() ? snapshotEditorBaseline(initialHtml) : '';
   const hasInitial = snapshot.length > 0;
@@ -81,11 +106,11 @@ export function TrackChangesEditor({
   const lastRenderAtRef = useRef(0);
   const skipSyncRef = useRef(false);
 
-  const TRACK_RENDER_MIN_MS = 32;
-
   const [tracking, setTracking] = useState(initialState.tracking);
   const [hasContent, setHasContent] = useState(initialState.hasContent);
   const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copySuccessTimeoutRef = useRef<number | null>(null);
   const [notice, setNotice] = useState<EditorNotice | null>(null);
 
   const showNotice = useCallback((text: string, tone: EditorNotice['tone'] = 'info') => {
@@ -226,15 +251,26 @@ export function TrackChangesEditor({
     clearNotice();
 
     if (!trackingRef.current) {
-      const editorHtml = editorRef.current?.innerHTML ?? '';
+      const editor = editorRef.current;
+      const editorHtml = editor?.innerHTML ?? '';
       const clean = extractCleanEditorHtml(editorHtml);
       if (!clean.trim()) {
         showNotice('Add or paste text before tracking.', 'error');
         return;
       }
 
-      establishBaseline(editorHtml);
-      renderTrackedHtml(clean, getCaretCleanOffset(editorRef.current!));
+      const caret = editor ? getCaretCleanOffset(editor) : null;
+
+      if (baselineSnapshotRef.current) {
+        cleanHtmlRef.current = clean;
+        lastCleanPlainRef.current = buildPlainTextMap(clean).text;
+        trackingRef.current = true;
+        setTracking(true);
+      } else {
+        establishBaseline(editorHtml);
+      }
+
+      renderTrackedHtml(clean, caret);
       return;
     }
 
@@ -332,7 +368,16 @@ export function TrackChangesEditor({
 
       const redlineHtml = unwrapRedlineDiv(result.html);
       await copyHtmlToClipboard(redlineHtml);
-      showNotice('Copied — paste into your draft.', 'info');
+
+      if (copySuccessTimeoutRef.current !== null) {
+        window.clearTimeout(copySuccessTimeoutRef.current);
+      }
+
+      setCopied(true);
+      copySuccessTimeoutRef.current = window.setTimeout(() => {
+        copySuccessTimeoutRef.current = null;
+        setCopied(false);
+      }, COPY_SUCCESS_MS);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       showNotice(message, 'error');
@@ -370,6 +415,9 @@ export function TrackChangesEditor({
       if (renderTimeoutRef.current !== null) {
         window.clearTimeout(renderTimeoutRef.current);
       }
+      if (copySuccessTimeoutRef.current !== null) {
+        window.clearTimeout(copySuccessTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -406,14 +454,13 @@ export function TrackChangesEditor({
       <div className="track-editor__editor-wrap">
         <button
           type="button"
-          className="track-editor__copy-btn"
+          className={`track-editor__copy-btn${copied ? ' track-editor__copy-btn--copied' : ''}`}
           disabled={!canCopy}
           onClick={() => void handleCopyRedline()}
-          aria-label="Copy redline"
-          title="Copy redline"
+          aria-label={copied ? 'Copied' : 'Copy redline'}
+          title={copied ? 'Copied' : 'Copy redline'}
         >
-          <CopyIcon />
-          <span className="track-editor__copy-label">{copying ? 'Copying…' : 'Copy'}</span>
+          {copied ? <CheckIcon /> : <CopyIcon />}
         </button>
 
         <div

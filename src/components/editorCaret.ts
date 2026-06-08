@@ -1,5 +1,26 @@
 import { REDLINE_STYLES } from '../redline/types';
 
+const BLOCK_SELECTOR = 'p, div, li, h1, h2, h3, h4, h5, h6';
+
+/**
+ * Return the last block-level child of root if it has no visible text and no
+ * redline decorations — this is an empty paragraph/list-item created by Enter.
+ */
+function findLastEmptyBlock(root: HTMLElement): Element | null {
+  const blocks = root.querySelectorAll(BLOCK_SELECTOR);
+  if (blocks.length === 0) {
+    return null;
+  }
+  const last = blocks[blocks.length - 1];
+  if ((last.textContent ?? '').trim()) {
+    return null;
+  }
+  if (last.querySelector('[data-redline]')) {
+    return null;
+  }
+  return last;
+}
+
 function isRedlineDeleteElement(element: Element): boolean {
   if (element.getAttribute('data-redline') === 'delete') {
     return true;
@@ -114,6 +135,15 @@ export function setCaretCleanOffset(root: HTMLElement, offset: number): void {
 
   const tail: Text | null = lastNode;
   if (!targetNode && tail !== null && offset === lastEnd) {
+    const emptyBlock = findLastEmptyBlock(root);
+    if (emptyBlock) {
+      const range = document.createRange();
+      range.setStart(emptyBlock, 0);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
     targetOffset = tail.textContent?.length ?? 0;
     targetNode = tail;
   }

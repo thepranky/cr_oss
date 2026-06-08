@@ -48,7 +48,7 @@ function normalizeLineForMatch(line: string): string {
 }
 
 /** Normalize text for fuzzy selection matching (bullets, line endings). */
-export function normalizeForSelectionMatch(text: string): string {
+function normalizeForSelectionMatch(text: string): string {
   return normalizePlainTextLineEndings(text.trim())
     .split('\n')
     .map((line) => normalizeLineForMatch(line))
@@ -86,8 +86,13 @@ export function locateSelectionInPlainText(
     return null;
   }
 
+  // Normalization only shortens text (removes bullet prefixes, trims). So the
+  // slice that normalizes to `target` must be at least target.length chars long.
+  // Cap the inner loop at target.length + per-line fuzz to avoid O(n³).
+  const fuzz = target.split('\n').length * 20 + 20;
   for (let start = 0; start < body.length; start++) {
-    for (let end = start + 1; end <= body.length; end++) {
+    const maxEnd = Math.min(body.length, start + target.length + fuzz);
+    for (let end = start + target.length; end <= maxEnd; end++) {
       if (normalizeForSelectionMatch(body.slice(start, end)) === target) {
         return { start, end };
       }
@@ -150,8 +155,10 @@ export function findAllSelectionRegions(
 
   const target = normalizeForSelectionMatch(selection);
   if (target) {
+    const fuzz = target.split('\n').length * 20 + 20;
     for (let start = 0; start < body.length; start++) {
-      for (let end = start + 1; end <= body.length; end++) {
+      const maxEnd = Math.min(body.length, start + target.length + fuzz);
+      for (let end = start + target.length; end <= maxEnd; end++) {
         if (normalizeForSelectionMatch(body.slice(start, end)) === target) {
           addUniqueRegion(regions, seen, start, end);
           break;
@@ -615,23 +622,10 @@ export function locateRegionInPlainText(
   return resolveRegionForReplacement(bodyPlainText, anchors, options?.captureBodyPlain);
 }
 
-function wrapBlockHtml(
-  tag: string,
-  inner: string,
-  style?: string,
-  className?: string,
-): string {
-  return wrapBlock(tag, inner, style ?? null, className ?? null);
-}
-
 function unwrapRedlineContainer(html: string): string {
   const trimmed = html.trim();
   const divMatch = trimmed.match(/^<div>([\s\S]*)<\/div>$/i);
   return divMatch ? divMatch[1] : trimmed;
-}
-
-function toGroupedBlock(block: HtmlBlock): GroupedBlockHtml {
-  return groupedBlockFrom(block);
 }
 
 function advancePlainCursor(plainText: string, cursor: number): number {
@@ -774,7 +768,7 @@ function sliceBlockHtmlAtRange(
   const clampedEnd = Math.min(block.text.length, relEnd);
   const inlineMap = buildInlinePlainTextMap(block.innerHtml);
   const inner = sliceMapRange(inlineMap, clampedStart, clampedEnd);
-  return wrapBlockHtml(block.tag, inner, block.blockStyle, block.blockClass);
+  return wrapBlock(block.tag, inner, block.blockStyle ?? null, block.blockClass ?? null);
 }
 
 function replacementToGroupedBlocks(
@@ -809,12 +803,12 @@ function replaceRegionPreservingBlocks(
 
   for (const { block, start, end } of blockRanges) {
     if (end <= region.start) {
-      before.push(toGroupedBlock(block));
+      before.push(groupedBlockFrom(block));
       continue;
     }
 
     if (start >= region.end) {
-      after.push(toGroupedBlock(block));
+      after.push(groupedBlockFrom(block));
       continue;
     }
 
@@ -865,14 +859,14 @@ function spliceRegionInHtml(
   for (const { block, start, end } of blockRanges) {
     if (end <= region.start) {
       if (mode === 'replace') {
-        before.push(toGroupedBlock(block));
+        before.push(groupedBlockFrom(block));
       }
       continue;
     }
 
     if (start >= region.end) {
       if (mode === 'replace') {
-        after.push(toGroupedBlock(block));
+        after.push(groupedBlockFrom(block));
       }
       continue;
     }

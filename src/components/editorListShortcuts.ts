@@ -39,7 +39,11 @@ function replaceBlockWithListItem(
 ): void {
   const list = document.createElement(listTag);
   const item = document.createElement('li');
-  item.innerHTML = itemHtml;
+  if (itemHtml) {
+    item.innerHTML = itemHtml;
+  } else {
+    item.appendChild(document.createElement('br'));
+  }
   list.appendChild(item);
 
   const parentList = block.closest(listTag);
@@ -94,12 +98,14 @@ function removeLinePrefix(root: HTMLElement, prefixLength: number): void {
 
 function insertListItemAfter(currentItem: HTMLLIElement): HTMLLIElement {
   const next = document.createElement('li');
+  const placeholder = document.createElement('br');
+  next.appendChild(placeholder);
   currentItem.insertAdjacentElement('afterend', next);
 
   const selection = window.getSelection();
   if (selection) {
     const range = document.createRange();
-    range.selectNodeContents(next);
+    range.setStart(next, 0);
     range.collapse(true);
     selection.removeAllRanges();
     selection.addRange(range);

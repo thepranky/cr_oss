@@ -273,7 +273,7 @@ export function sliceMapRange(
 }
 
 /** Apply inline tags from the baseline segment at `position` to plain diff text. */
-export function stylePlainFromBaselineAt(
+function stylePlainFromBaselineAt(
   map: PlainTextMap,
   position: number,
   plain: string,

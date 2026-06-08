@@ -49,7 +49,7 @@ function App({ initError }: AppProps) {
     <main className="app">
       <header className="app-header">
         <h1 className="app-header__title">Cr_oss</h1>
-        <p className="app-header__subtitle">Track changes in email drafts</p>
+        <p className="app-header__subtitle">Track changes in Outlook</p>
       </header>
 
       <section className="panel">

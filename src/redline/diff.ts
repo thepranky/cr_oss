@@ -2,10 +2,20 @@ import { diffChars, diffWordsWithSpace } from 'diff';
 import type { DiffPart } from './types';
 
 const CHAR_DIFF_THRESHOLD = 40;
-/** Below this ratio of changed characters, prefer char-level diff in long text. */
+/**
+ * Below this ratio of changed characters, the overall text change is considered
+ * localized — use word+char refinement rather than raw word diff.
+ */
 const LOCALIZED_CHANGE_RATIO = 0.18;
-/** Word tokens this length or shorter always use char-level diff (numbers, codes). */
-const SHORT_TOKEN_CHAR_DIFF_MAX = 4;
+/**
+ * Within a changed word pair, below this ratio the change looks like a typo
+ * (single/double char substitution) → drill down to char-level diff.
+ * Higher than LOCALIZED_CHANGE_RATIO: a 7-char word with one transposed letter
+ * has 2/7 ≈ 28 % which should still get char-level treatment.
+ */
+const WORD_PAIR_TYPO_RATIO = 0.35;
+/** Word tokens this length or shorter always use char-level diff (short words, numbers, codes). */
+const SHORT_TOKEN_CHAR_DIFF_MAX = 5;
 
 function mapChange(part: { added?: boolean; removed?: boolean; value: string }): DiffPart {
   if (part.added) {
@@ -56,7 +66,7 @@ function shouldCharDiffWordPair(oldToken: string, newToken: string): boolean {
     return true;
   }
 
-  return changedCharRatio(oldToken, newToken) <= LOCALIZED_CHANGE_RATIO;
+  return changedCharRatio(oldToken, newToken) <= WORD_PAIR_TYPO_RATIO;
 }
 
 function refineWordPair(oldToken: string, newToken: string): DiffPart[] {

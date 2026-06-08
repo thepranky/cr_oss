@@ -14,13 +14,23 @@ npm-debug.log*
 
 # OS / editor
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.claude/
 
 # Vite / TypeScript cache
 *.local
+*.tsbuildinfo
 node_modules/.tmp/
+.eslintcache
+
+# Test output
+coverage/
 
 # Optional local TLS certs (if using mkcert via scripts/generate-certs.sh)
 .certs/
+
+# Cursor (local agent/rules config)
+.cursor/
